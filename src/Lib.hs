@@ -41,9 +41,12 @@ find_C0_v1 path = do
 find_C0_v2 :: FilePath -> IO (Maybe BL.ByteString)
 find_C0_v2 path = do
   contents <- BL.readFile path
-  let size = BL.length contents
-      wordAt i = BL.take 4 . BL.drop i $ contents
-  return $ fmap wordAt $ lastMay $ filter (\i -> BL.index contents i == 0xC0) [0,4..size]
+  size <- fmap fromIntegral $ withFile path ReadMode hFileSize
+  -- using `let size = BL.length contents` will force the entire contents of the file
+  -- into memory. Our search loop loads the entire file into memory anyway, but at least
+  -- it's not just because we want the length of the input.
+  let wordAt i = BL.take 4 . BL.drop i $ contents
+  return $ fmap wordAt $ lastMay $ filter (\i -> BL.index contents i == 0xC0) [0,4..size-1]
 
 -- read a file backwords until a predicate returns a Just value
 loopBlocks :: Int -> Handle -> Integer -> (BS.ByteString -> Integer -> Maybe a) -> IO (Maybe a)
