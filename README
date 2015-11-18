@@ -22,3 +22,7 @@ Synopsis
     read-word32-exe v2 input-100m  # may not finish
     read-word32-exe v3 input-100m
 
+    # Create a 12M file of Word32s beginning with 0xC0
+
+    read-word32-exe create input-12m 30000
+

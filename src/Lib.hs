@@ -7,6 +7,8 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString as BS
 import Safe (lastMay, headMay)
 import Data.Word (Word32)
+import Data.Monoid
+import qualified Data.Binary.Builder as Builder
 
 intoWords :: BL.ByteString -> [ BL.ByteString ]
 intoWords bs
@@ -64,4 +66,11 @@ find_C0_v3 path = do
         blksize = 64*1024 :: Int
     loopBlocks blksize h top $ \blk offset ->
           fmap ( (+offset) . fromIntegral ) $ headMay $ filter (\i -> BS.index blk i == 0xC0) [blksize-4,blksize-8..0]
+
+create_C0_file :: FilePath -> Int -> IO ()
+create_C0_file path count = do
+  let toWord32 i = 0xc0*256*256*256 + fromIntegral (mod i (256*256*256))
+      builder = mconcat [ Builder.putWord32be (toWord32 i) | i <- [0..count-1] ]
+  withFile path WriteMode $ \h -> do
+    BL.hPut h (Builder.toLazyByteString builder)
 
